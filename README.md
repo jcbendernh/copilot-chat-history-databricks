@@ -41,12 +41,16 @@ When finished, your external location should look like the screenshot below. <BR
 
 3. Using the Databricks Git Integration with Git Folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository to your Databricks environment via Git Folders.  For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
 
+4. To populate your silver tables, execute the [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb). <BR>
+NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment.
 
+5. To populate your gold tables, execute the [Conversations - Initial Ingestion](src/Autoloader/Conversations%20-%20Initial%20Ingestion.ipynb). <BR>
+NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment and **ONLY RUN THIS NOTEBOOK THE FIRST TIME**.
 
+6. Once your gold tables are populated, you can append them using the [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb).
+NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment.
 
+7. Last but not least you can create a Databricks Job to run the following notebooks in succession.
+  - [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb).
+  - [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb).
 
-
-
-
-
-[CDM Incremental Ingestion](https://github.com/sergioschena/cdm-to-delta)
