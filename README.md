@@ -12,6 +12,23 @@ Below are sample screenshots of the report.
 
 This repository is the next iteration of the [How to efficiently ingest Dataverse Common Data Model (CDM) tables with Databricks](https://community.databricks.com/t5/technical-blog/how-to-efficiently-ingest-dataverse-common-data-model-cdm-tables/ba-p/66671) article. For this solution, we use Unity Catalog and have Dataverse Synapse Link write to an ADLS Gen2 container that is recognized as an external location by Unity Catalog and use [Change Data Feed](https://learn.microsoft.com/en-us/azure/databricks/tables/features/change-data-feed) (CDF) on the Silver tables to only populate the incremental changes to the Gold table.
 
+### High Level Architecture
+```mermaid
+flowchart TD
+    A[Dataverse Synapse Link<br/>Exports conversation and user data to ADLS]
+    B[Azure Data Lake Storage<br/>Stores CDM files for conversationtranscript and systemuser]
+    C[Databricks Bronze to Silver Ingestion<br/>Auto Loader ingests CDM files into Delta tables]
+    D[Databricks Silver to Gold Transformation<br/>Parses conversation JSON and enriches with user details]
+    E[Gold Conversations Table<br/>Curated analytics-ready conversation history]
+    F[Incremental Processing with Change Data Feed<br/>Appends only new conversation records]
+    G[Databricks SQL / Serverless]
+    H[Power BI Copilot Chat History Report<br/>Summary and Detail views]
+
+    A --> B --> C --> D --> E --> G --> H
+    E --> F
+    F --> E
+```
+
 ## Assets Contained in This Repo
 
 ### Databricks Notebooks
