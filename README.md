@@ -36,7 +36,7 @@ When finished, the root folder of your new container should look like the screen
 ![ADLS Container](img/ADLS_Container.png)
 
 2. Within Unity Catalog, create an external location that points to the newly created Azure Data Lake container from Step 1. For more information, see [Connect to an Azure Data Lake Storage Gen2 (ADLS Gen2) external location](https://docs.azure.cn/en-us/databricks/connect/unity-catalog/cloud-storage/external-locations-adls#external-location)<BR>
-When finished, your external location should look like the screenshot below. <BR>&nbsp:<BR>
+When finished, your external location should look like the screenshot below. <BR>&nbsp;<BR>
 ![External Location](img/external_location.png)
 
 3. Using Databricks Git Integration with Git folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository to your Databricks environment via Git folders. For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
