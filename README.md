@@ -19,12 +19,14 @@ This repository contains the following notebooks on how to transform the CSVs cr
 #### Bronze to Silver  
 - [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb): This notebook incrementally ingests CDM (Common Data Model) entities exported from Dataverse into Unity Catalog Delta tables using Auto Loader, reading from a UC Volume-backed External Location and applying schemas derived from model.json.
 #### Silver to Gold 
-- [Conversations - Initial Ingest](src/Autoloader/Conversations%20-%20Initial%20Ingestion.ipynb): This notebook transforms raw Copilot conversation transcripts from the Silver layer (silver.dataverse.conversationtranscript) by parsing nested JSON, exploding individual message parts, joining with user identity data, and writing the enriched, flattened result to a Gold layer Delta table created (gold.copilot.conversations).
+- [Conversations - Initial Ingestion](src/Autoloader/Conversations%20-%20Initial%20Ingestion.ipynb): This notebook transforms raw Copilot conversation transcripts from the Silver layer (silver.dataverse.conversationtranscript) by parsing nested JSON, exploding individual message parts, joining with user identity data, and writing the enriched, flattened result to a Gold layer Delta table created (gold.copilot.conversations).
+- [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb): This notebook performs an incremental Silver-to-Gold ETL: it reads Dataverse conversation transcripts, parses and flattens the nested JSON content into individual message rows, enriches them with user identity details, and appends only new records (based on a timestamp watermark) to the gold.copilot.conversations Delta table.
 
-
-## Genie Spaces
-You can create a Databricks Genie space to chat with your gold data.  Check out [Set up and manage an AI/BI Genie space](https://learn.microsoft.com/en-us/azure/databricks/genie/set-up) for more information on how to setup an Azure Databricks Genie Space.
-
+## Power BI Report
+- [Copilot Chat History Report](src/PowerBI/Copilot%20Chat%20History%20-%20Databricks.pbix): This report contains two main pages:
+    - **Conversation Summary Page**: A high-level dashboard showing overall conversation history for a specified time period. You can filter by individual Copilot Studio agent and communication channel. You can also drill through to any agent to see more details on the Conversation Detail page.
+    - **Conversation Detail Page**: Displays individual conversations and shows the conversation history between users and the agent.
+NOTE:  You will have to change the connection details of the report to point to your Databricks SQL Serverless Compute
 
 
 ## To get started, please perform the following:
@@ -37,10 +39,10 @@ When finished, the root folder of your new container should look like the screen
 When finished, your external location should look like the screenshot below. <BR>
 ![External Location](img/external_location.png)
 
-3. Using the Databricks Git Integration with Git Folders  
+3. Using the Databricks Git Integration with Git Folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository to your Databricks environment via Git Folders.  For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
 
 
-## Under Construction ##
+
 
 
 
