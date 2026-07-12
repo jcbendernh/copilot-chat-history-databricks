@@ -31,8 +31,8 @@ NOTE: You will have to change the connection details of the report to point to y
 
 ## To get started, please perform the following:
 1. Set up Dataverse Synapse Link to an Azure Data Lake for the following tables: **ConversationTranscript** (conversationtranscript) and **User** (systemuser). When finished, you should have a new container in Azure Data Lake that has a name beginning with "dataverse." For more information, see [Create an Azure Synapse Link for Dataverse with Azure Data Lake](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/azure-synapse-link-data-lake). <BR>
-NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>&nbsp;<BR>
-When finished, the root folder of your new container should look like the screenshot below. <BR>
+NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>
+When finished, the root folder of your new container should look like the screenshot below. <BR>&nbsp;<BR>
 ![ADLS Container](img/ADLS_Container.png)
 
 2. Within Unity Catalog, create an external location that points to the newly created Azure Data Lake container from Step 1. For more information, see [Connect to an Azure Data Lake Storage Gen2 (ADLS Gen2) external location](https://docs.azure.cn/en-us/databricks/connect/unity-catalog/cloud-storage/external-locations-adls#external-location)<BR>
