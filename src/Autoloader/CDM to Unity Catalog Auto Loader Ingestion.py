@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # DBTITLE 1,CDM → Unity Catalog: Modern Auto Loader Architecture
 # MAGIC %md
 # MAGIC #Bronze to Silver
@@ -20,23 +24,30 @@
 # DBTITLE 1,About: Configuration
 # MAGIC %md
 # MAGIC ### Step 1 — Configuration
-# MAGIC Define the target Unity Catalog location (`catalog.schema`), the list of CDM entity names to process, and the UC Volume paths for the source data and Auto Loader checkpoints. No credentials are stored here — all ADLS authentication is handled transparently by the UC External Location and its attached Storage Credential.
+# MAGIC Reads runtime values from notebook parameters (widgets) so the same notebook can be reused across environments or scheduled with different inputs via a Lakeflow Job task. Parameters:
+# MAGIC
+# MAGIC | Parameter | Purpose |
+# MAGIC |---|---|
+# MAGIC | `target_catalog` / `target_schema` | Target Unity Catalog location (`catalog.schema`) for ingested Delta tables |
+# MAGIC | `entities` | Comma-separated list of CDM entity names to process (must match `model.json`) |
+# MAGIC | `cdm_volume_path` | UC Volume path for the source CDM data (backed by an External Location — no credentials in code) |
+# MAGIC | `checkpoint_volume_path` | UC Volume path where Auto Loader stores per-entity checkpoint state |
 
 # COMMAND ----------
 
 # DBTITLE 1,Configuration
 # ── Target Unity Catalog location ───────────────────────────────────────────
-target_catalog = "silver"
-target_schema  = "dataverse"
+target_catalog = dbutils.widgets.get("target_catalog")
+target_schema  = dbutils.widgets.get("target_schema")
 
 # ── Entities to ingest (must match names in model.json) ──────────────────────
-entities = ["conversationtranscript","systemuser"]
+entities = [e.strip() for e in dbutils.widgets.get("entities").split(",")]
 
 # ── UC Volume paths ───────────────────────────────────────────────────────────
 # Source: External Volume backed by the ADLS 'dataflow-cdm' container.
 # No credentials needed here — the UC External Location handles ADLS auth.
-cdm_volume_path        = "/Volumes/bronze/default/dataverse"
-checkpoint_volume_path = "/Volumes/bronze/default/dataverse/_checkpoints"
+cdm_volume_path        = dbutils.widgets.get("cdm_volume_path")
+checkpoint_volume_path = dbutils.widgets.get("checkpoint_volume_path")
 
 print(f"Target : {target_catalog}.{target_schema}")
 print(f"Source : {cdm_volume_path}")
@@ -47,7 +58,9 @@ print(f"Entities: {entities}")
 # DBTITLE 1,About: Parse model.json
 # MAGIC %md
 # MAGIC ### Step 2 — Parse the CDM Manifest
-# MAGIC Reads `model.json` from the source Volume to discover each entity’s attribute names and data types. A type map converts Microsoft CDM types (e.g. `guid`, `datetime`, `decimal`) into their Spark equivalents, producing a typed `StructType` for each entity. Supplying an explicit schema avoids Auto Loader schema inference at read time and ensures type fidelity with the upstream Dataverse export.
+# MAGIC Reads `model.json` from the source Volume to discover each entity’s attribute names and data types. A `CDM_TYPE_MAP` dictionary converts Microsoft CDM types (`guid`, `datetime`, `datetimeoffset`, `decimal`, `int64`, `boolean`, etc.) into their Spark equivalents, producing a typed `StructType` for each entity listed in the `entities` parameter. Supplying an explicit schema avoids Auto Loader schema inference at read time and ensures type fidelity with the upstream Dataverse export.
+# MAGIC
+# MAGIC Raises `ValueError` if any requested entity is not found in `model.json`, printing the available entity names for troubleshooting.
 
 # COMMAND ----------
 
@@ -127,7 +140,7 @@ print(f"Target schema ready: {target_catalog}.{target_schema}")
 # MAGIC %md
 # MAGIC ### Step 4 — Schema Verification, Optional Reset, and Incremental Ingestion
 # MAGIC
-# MAGIC **Step 4a — Schema Verification** (`conversationtranscript`): Before running the stream, a batch read with the same CSV parser options is run against the `conversationtranscript` source folder. It prints the 50-column CDM schema, checks null rates on a 5-row sample, and confirms that the JSON `content` column is parsed as a single field and does not spill into adjacent columns. Re-run this cell whenever source data or CSV format changes.
+# MAGIC **Step 4a — Schema Verification** (`conversationtranscript`): Before running the stream, a batch read with the same CSV parser options is run against the `conversationtranscript` source folder. It prints the full CDM schema (column names and Spark types), reads a 5-row sample, and displays `Id`, `content`, `conversationstarttime`, and `conversationtranscriptid` to confirm the JSON `content` column is parsed as a single field and does not spill into adjacent columns. Re-run this cell whenever source data or CSV format changes.
 # MAGIC
 # MAGIC **Step 4b — Reset** _(run only when re-ingesting from scratch)_: Deletes each entity's Auto Loader checkpoint directory and truncates the corresponding target Delta table. Use this after changing CSV parser settings, or when upstream data must be fully re-processed. Safely skips entities whose checkpoint or table does not yet exist.
 # MAGIC
@@ -138,7 +151,9 @@ print(f"Target schema ready: {target_catalog}.{target_schema}")
 # MAGIC * **`pathGlobFilter="*.csv"`** — restricts file discovery to CSV partition files only, excluding CDM manifest JSON files (`model.json`, `*.cdm.json`) that share the same directory.
 # MAGIC * **`multiLine=true`** — handles CSV records whose `content` JSON payload spans multiple lines.
 # MAGIC * **`quote='"'` / `escape='"'`** — Dataverse CSV encoding: fields containing commas or quotes are outer-quoted with `"`, and inner double-quotes are escaped by doubling (`""`) rather than backslash-escaping.
-# MAGIC * **`_ingested_at` / `_source_file` columns** — add load timestamp and source partition path for downstream lineage and debugging.
+# MAGIC * **`cloudFiles.schemaLocation`** — persists the provided schema to the checkpoint directory, allowing Auto Loader to track schema evolution across runs.
+# MAGIC * **`_ingested_at` / `_source_file` columns** — add load timestamp and source partition path (via `_metadata.file_path`) for downstream lineage and debugging.
+# MAGIC * **`mergeSchema=true`** — allows the target Delta table to accommodate new columns if the source schema evolves.
 # MAGIC * **`toTable(target_table)`** — writes directly to a Unity Catalog Delta table; creates it on the first run.
 
 # COMMAND ----------
@@ -188,32 +203,33 @@ display(verification_df)
 # COMMAND ----------
 
 # DBTITLE 1,Reset — Delete checkpoints and truncate target tables
-# ── RESET: wipe checkpoints + truncate target tables ──────────────────
-# Run this before re-ingesting when the CSV parser settings have changed.
-#   - Deleting the checkpoint forces Auto Loader to reprocess ALL source files.
-#   - Truncating the table removes previously misread rows so they are not
-#     duplicated when the corrected ingestion appends new data.
-# ⚠️  This is destructive and cannot be undone without re-running ingestion.
-
-for entity_name in entities:
-    checkpoint_path = f"{checkpoint_volume_path}/{entity_name}"
-    target_table    = f"{target_catalog}.{target_schema}.{entity_name}"
-
-    # 1 — Delete the Auto Loader checkpoint directory
-    try:
-        dbutils.fs.rm(checkpoint_path, recurse=True)
-        print(f"[✓] [{entity_name}] Checkpoint deleted : {checkpoint_path}")
-    except Exception:
-        print(f"[-] [{entity_name}] No checkpoint found (first run?) — skipping")
-
-    # 2 — Truncate the target Delta table (keeps schema, removes all rows)
-    if spark.catalog.tableExists(target_table):
-        spark.sql(f"TRUNCATE TABLE {target_table}")
-        print(f"[✓] [{entity_name}] Target table truncated : {target_table}")
-    else:
-        print(f"[-] [{entity_name}] Table does not exist yet — nothing to truncate")
-
-print("\nReset complete — run the Auto Loader cell below to re-ingest with corrected CSV parsing.")
+# MAGIC %skip
+# MAGIC # ── RESET: wipe checkpoints + truncate target tables ──────────────────
+# MAGIC # Run this before re-ingesting when the CSV parser settings have changed.
+# MAGIC #   - Deleting the checkpoint forces Auto Loader to reprocess ALL source files.
+# MAGIC #   - Truncating the table removes previously misread rows so they are not
+# MAGIC #     duplicated when the corrected ingestion appends new data.
+# MAGIC # ⚠️  This is destructive and cannot be undone without re-running ingestion.
+# MAGIC
+# MAGIC for entity_name in entities:
+# MAGIC     checkpoint_path = f"{checkpoint_volume_path}/{entity_name}"
+# MAGIC     target_table    = f"{target_catalog}.{target_schema}.{entity_name}"
+# MAGIC
+# MAGIC     # 1 — Delete the Auto Loader checkpoint directory
+# MAGIC     try:
+# MAGIC         dbutils.fs.rm(checkpoint_path, recurse=True)
+# MAGIC         print(f"[✓] [{entity_name}] Checkpoint deleted : {checkpoint_path}")
+# MAGIC     except Exception:
+# MAGIC         print(f"[-] [{entity_name}] No checkpoint found (first run?) — skipping")
+# MAGIC
+# MAGIC     # 2 — Truncate the target Delta table (keeps schema, removes all rows)
+# MAGIC     if spark.catalog.tableExists(target_table):
+# MAGIC         spark.sql(f"TRUNCATE TABLE {target_table}")
+# MAGIC         print(f"[✓] [{entity_name}] Target table truncated : {target_table}")
+# MAGIC     else:
+# MAGIC         print(f"[-] [{entity_name}] Table does not exist yet — nothing to truncate")
+# MAGIC
+# MAGIC print("\nReset complete — run the Auto Loader cell below to re-ingest with corrected CSV parsing.")
 
 # COMMAND ----------
 
@@ -263,7 +279,7 @@ for entity_name, entity_schema in entity_schemas.items():
 # DBTITLE 1,About: Verification
 # MAGIC %md
 # MAGIC ### Step 5 — Verify Ingested Tables
-# MAGIC Previews the first 10 rows of each target Delta table to confirm data landed correctly. Run this after ingestion to spot-check column names, data types, null rates, and that the `_ingested_at` / `_source_file` metadata columns are populated before pointing downstream consumers at the table.
+# MAGIC Iterates over the `entities` list and displays the first 10 rows of each target Delta table (`{target_catalog}.{target_schema}.{entity_name}`). Run this after ingestion to spot-check column alignment, data types, and that the `_ingested_at` / `_source_file` audit columns are populated before pointing downstream consumers at the table.
 
 # COMMAND ----------
 
