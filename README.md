@@ -10,7 +10,7 @@ Below are sample screenshots of the report.
 ![Conversation Summary](img/conversationsummary.png)
 ![Conversation Detail](img/conversationdetail.png)
 
-This repository is the next iteration of the [How to efficiently ingest Dataverse Common Data Model (CDM) tables with Databricks](https://community.databricks.com/t5/technical-blog/how-to-efficiently-ingest-dataverse-common-data-model-cdm-tables/ba-p/66671) article. For this solution, we use Unity Catalog and have Dataverse Synapse Link write to an ADLS Gen2 container that is recognized as an external location by Unity Catalog.
+This repository is the next iteration of the [How to efficiently ingest Dataverse Common Data Model (CDM) tables with Databricks](https://community.databricks.com/t5/technical-blog/how-to-efficiently-ingest-dataverse-common-data-model-cdm-tables/ba-p/66671) article. For this solution, we use Unity Catalog and have Dataverse Synapse Link write to an ADLS Gen2 container that is recognized as an external location by Unity Catalog and use [Change Data Feed](https://learn.microsoft.com/en-us/azure/databricks/tables/features/change-data-feed) (CDF) on the Silver tables to only populate the incremental changes to the Gold table.
 
 ## Assets Contained in This Repo
 
@@ -39,7 +39,7 @@ When finished, the root folder of your new container should look like the screen
 When finished, your external location should look like the screenshot below. <BR>&nbsp;<BR>
 ![External Location](img/external_location.png)
 
-3. Using Databricks Git Integration with Git folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository to your Databricks environment via Git folders. For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
+3. Using Databricks Git Integration with Git folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository via Git folders. For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
 
 4. To populate your silver tables, execute the [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb). <BR>
 NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment.
@@ -47,7 +47,7 @@ NOTE: Remember to change the notebook parameters to match the settings within yo
 5. To populate your gold tables, execute the [Conversations - Initial Ingestion](src/Autoloader/Conversations%20-%20Initial%20Ingestion.ipynb). <BR>
 NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment and **ONLY RUN THIS NOTEBOOK THE FIRST TIME**.
 
-6. Once your gold tables are populated, you can append them using the [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb).
+6. Once your gold tables are populated, you can append them using the [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb).<BR>
 NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment.
 
 7. Last but not least, you can create a Databricks job to run the following notebooks in succession:<BR>
