@@ -31,7 +31,7 @@ NOTE: You will have to change the connection details of the report to point to y
 
 ## To get started, please perform the following:
 1. Set up Dataverse Synapse Link to an Azure Data Lake for the following tables: **ConversationTranscript** (conversationtranscript) and **User** (systemuser). When finished, you should have a new container in Azure Data Lake that has a name beginning with "dataverse." For more information, see [Create an Azure Synapse Link for Dataverse with Azure Data Lake](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/azure-synapse-link-data-lake). <BR>
-NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>&nbsp:<BR>
+NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>&nbsp;<BR>
 When finished, the root folder of your new container should look like the screenshot below. <BR>
 ![ADLS Container](img/ADLS_Container.png)
 
