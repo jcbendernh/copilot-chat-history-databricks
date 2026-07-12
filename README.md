@@ -25,18 +25,18 @@ This repository contains the following notebooks that transform CSV files create
 ## Power BI Report
 - [Copilot Chat History Report](src/PowerBI/Copilot%20Chat%20History%20-%20Databricks.pbix): This report contains two main pages:
     - **Conversation Summary Page**: A high-level dashboard showing overall conversation history for a specified time period. You can filter by individual Copilot Studio agent and communication channel. You can also drill through to any agent to see more details on the Conversation Detail page.
-    - **Conversation Detail Page**: Displays individual conversations and shows the conversation history between users and the agent.
+    - **Conversation Detail Page**: Displays individual conversations and shows the conversation history between users and the agent.<BR>
 NOTE: You will have to change the connection details of the report to point to your Databricks SQL Serverless compute.
 
 
 ## To get started, please perform the following:
 1. Set up Dataverse Synapse Link to an Azure Data Lake for the following tables: **ConversationTranscript** (conversationtranscript) and **User** (systemuser). When finished, you should have a new container in Azure Data Lake that has a name beginning with "dataverse." For more information, see [Create an Azure Synapse Link for Dataverse with Azure Data Lake](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/azure-synapse-link-data-lake). <BR>
-NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>
+NOTE: Do not set up incremental ingestion when creating your Synapse Link. <BR>&nbsp:<BR>
 When finished, the root folder of your new container should look like the screenshot below. <BR>
 ![ADLS Container](img/ADLS_Container.png)
 
 2. Within Unity Catalog, create an external location that points to the newly created Azure Data Lake container from Step 1. For more information, see [Connect to an Azure Data Lake Storage Gen2 (ADLS Gen2) external location](https://docs.azure.cn/en-us/databricks/connect/unity-catalog/cloud-storage/external-locations-adls#external-location)<BR>
-When finished, your external location should look like the screenshot below. <BR>
+When finished, your external location should look like the screenshot below. <BR>&nbsp:<BR>
 ![External Location](img/external_location.png)
 
 3. Using Databricks Git Integration with Git folders, you can import these notebooks into your Databricks workspace. To do so, clone this repository to your GitHub environment and add your cloned repository to your Databricks environment via Git folders. For more on this procedure, see [Azure Databricks Git folders](https://learn.microsoft.com/en-us/azure/databricks/repos/).
@@ -51,6 +51,6 @@ NOTE: Remember to change the notebook parameters to match the settings within yo
 NOTE: Remember to change the notebook parameters to match the settings within your Databricks environment.
 
 7. Last but not least, you can create a Databricks job to run the following notebooks in succession:<BR>
-   [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb).<BR>
-   [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb).
+   [CDM to Unity Catalog Auto Loader Ingestion](/src/Autoloader/CDM%20to%20Unity%20Catalog%20Auto%20Loader%20Ingestion.ipynb)<BR>
+   [Conversations - Incremental Load](src/Autoloader/Conversations%20-%20Incremental%20Load.ipynb)
 
