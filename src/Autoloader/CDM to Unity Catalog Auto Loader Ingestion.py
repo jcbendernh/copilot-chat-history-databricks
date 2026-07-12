@@ -287,4 +287,4 @@ for entity_name, entity_schema in entity_schemas.items():
 for entity_name in entities:
     target_table = f"{target_catalog}.{target_schema}.{entity_name}"
     print(f"── {target_table} ──")
-    display(spark.table(target_table).limit(10))
+    display(spark.table(target_table).orderBy("_ingested_at", ascending=False).limit(10))
