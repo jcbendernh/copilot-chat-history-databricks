@@ -15,15 +15,14 @@ This repository is the next iteration of the [How to efficiently ingest Datavers
 ### High Level Architecture
 ```mermaid
 flowchart TD
-  A[Dataverse Synapse Link<br>Exports conversation and user data to ADLS]
-  B[Azure Data Lake Storage<br>Stores CDM files for conversationtranscript and systemuser]
-  C[Databricks Bronze to Silver Ingestion<br>Auto Loader ingests CDM files into Delta tables]
-  D[Databricks Silver to Gold Transformation<br>Parses conversation JSON and enriches with user details]
-  E[Gold Conversations Table<br>Curated analytics-ready conversation history]
-  F[Incremental Processing with Change Data Feed<br>Appends only new conversation records]
-  G[Databricks SQL / Serverless]
-  H[Power BI Copilot Chat History Report<br>Summary and Detail views]
-
+  A[Dataverse Synapse Link<br/>Export convo + user data]
+  B[ADLS Gen2<br/>CDM files stored]
+  C[Bronze to Silver<br/>Auto Loader ingestion]
+  D[Silver to Gold<br/>Parse + enrich JSON]
+  E[Gold conversations table<br/>Analytics-ready]
+  F[Incremental processing<br/>Change Data Feed]
+  G[Databricks SQL<br/>Serverless]
+  H[Power BI report<br/>Summary + detail]
 
   A --> B --> C --> D --> E --> G --> H
   E --> F
