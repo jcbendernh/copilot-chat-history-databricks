@@ -24,6 +24,7 @@ flowchart TD
   G[Databricks SQL / Serverless]
   H[Power BI Copilot Chat History Report<br>Summary and Detail views]
 
+
   A --> B --> C --> D --> E --> G --> H
   E --> F
   F --> E
