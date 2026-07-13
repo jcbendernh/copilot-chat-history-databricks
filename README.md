@@ -22,7 +22,7 @@ flowchart TD
   E[Gold conversations table<br/>Analytics-ready]
   F[Incremental processing<br/>Change Data Feed]
   G[Databricks SQL<br/>Serverless]
-  H[Power BI report<br/>Summary + detail]
+  H[Power BI report<br/>Summary + Detail]
 
   A --> B --> C --> D --> E --> G --> H
   E --> F
